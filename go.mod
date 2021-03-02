@@ -1,4 +1,4 @@
-module priva.te/pricer
+module priva.te/slicer
 
 go 1.16
 
