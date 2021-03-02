@@ -1,6 +1,7 @@
 package slicer
 
 import (
+
 	"sort"
 
 	"github.com/shopspring/decimal"
@@ -60,10 +61,12 @@ func PercentageDiscount(products []string, percentage int) Offer {
 	// sort products to use binary search
 	sort.Strings(products)
 
+	discountPercentage := decimal.New(int64(percentage), -2)
+
 	return func(basket Basket, getPrice GetPrice) decimal.Decimal {
 
 		discountTotal := decimal.Zero
-		discountPercentage := decimal.NewFromInt(int64(percentage))
+
 		if discountPercentage.IsZero() {
 			return discountTotal
 		}
@@ -76,7 +79,7 @@ func PercentageDiscount(products []string, percentage int) Offer {
 					continue
 				}
 				cost := getPrice(product).Mul(quantity)
-				discount := cost.Mul(discountPercentage).Div(decimal.New(100, 0)).Round(2)
+				discount := cost.Mul(discountPercentage).Round(2)
 				discountTotal = discountTotal.Add(discount)
 			}
 		}
@@ -92,8 +95,6 @@ func BuyNGetCheapestFree(products []string, n int) Offer {
 
 	return func(basket Basket, getPrice GetPrice) decimal.Decimal {
 
-		var qtyInSet, qtyToDiscount, remainder int
-
 		var matched []struct {
 			product  string
 			price    decimal.Decimal
@@ -107,29 +108,27 @@ func BuyNGetCheapestFree(products []string, n int) Offer {
 					product  string
 					price    decimal.Decimal
 					quantity int
-				}{basketItem, getPrice(basketItem), basket.GetQuantity(basketItem)})
-				qtyInSet += basket.GetQuantity(basketItem)
+				}{basketItem,
+					getPrice(basketItem),
+					basket.GetQuantity(basketItem)})
 			}
 		}
 
-		// sort matched products by price - less expensive first, and use every n item as discount
-		sort.Slice(matched, func(i, j int) bool { return matched[i].price.Cmp(matched[j].price) < 0 })
+		// sort matched products by price - most expensive first, and use every n item as discount
+		sort.Slice(matched, func(i, j int) bool { return matched[i].price.Cmp(matched[j].price) > 0 })
 
-		remainder = (qtyInSet) % n
-		qtyToDiscount = (qtyInSet - remainder) / n
 		discountTotal := decimal.Zero
 
-		if qtyToDiscount > 0 {
-			for _, match := range matched {
+		accumulator := 0
 
-				if qtyToDiscount > match.quantity {
-					discountTotal = discountTotal.Add(match.price.Mul(decimal.New(int64(match.quantity), 0)))
-					qtyToDiscount -= match.quantity
-				} else {
-					discountTotal = discountTotal.Add(match.price.Mul(decimal.New(int64(qtyToDiscount), 0)))
-					break
-				}
+		for _, match := range matched {
 
+			qtyForDiscount := decimal.New(int64((match.quantity+accumulator)/n), 0)
+			if !qtyForDiscount.IsZero() {
+				discountTotal = discountTotal.Add(match.price.Mul(qtyForDiscount))
+				accumulator = (match.quantity + accumulator) % n
+			} else {
+				accumulator += match.quantity
 			}
 		}
 
