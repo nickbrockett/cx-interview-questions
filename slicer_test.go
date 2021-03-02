@@ -20,9 +20,9 @@ var catalogue = Cheeses{
 	"Camembert":       decimal.RequireFromString("7.20"),
 	"Edam":            decimal.RequireFromString("4.89"),
 	"Port Salut":      decimal.RequireFromString("2.99"),
-	"Brie (Small)":    decimal.RequireFromString("1.30"),
-	"Brie (Medium)":   decimal.RequireFromString("2.89"),
-	"Brie (Large)":    decimal.RequireFromString("3.50"),
+	"Brie (Small)":    decimal.RequireFromString("2.00"),
+	"Brie (Medium)":   decimal.RequireFromString("4.00"),
+	"Brie (Large)":    decimal.RequireFromString("8.00"),
 }
 
 type SimpleBasket struct {
@@ -98,9 +98,11 @@ func TestSlicer_Calc(t *testing.T) {
 		{
 			name: "25% off Edam",
 			basket: &SimpleBasket{items: map[string]int{
+				"Cheddar":         1,
 				"Pilgrims Choice": 1,
 				"Edam":            1}},
-			expected: Total{SubTotal: decimal.RequireFromString("10.49"), Discount: decimal.RequireFromString("1.22"), Total: decimal.RequireFromString("9.27")},
+			expected:  Total{SubTotal: decimal.RequireFromString("11.49"), Discount: decimal.RequireFromString("1.22"), Total: decimal.RequireFromString("10.27")},
+			sayCheese: true,
 		},
 		{
 			name: "buy_three_of_set_get_cheapest_free (negative test)",
@@ -115,7 +117,7 @@ func TestSlicer_Calc(t *testing.T) {
 				"Brie (Large)":  1,
 				"Brie (Medium)": 1,
 				"Brie (Small)":  1}},
-			expected:  Total{SubTotal: decimal.RequireFromString("7.69"), Discount: decimal.RequireFromString("1.30"), Total: decimal.RequireFromString("6.39")},
+			expected:  Total{SubTotal: decimal.RequireFromString("14.00"), Discount: decimal.RequireFromString("2.00"), Total: decimal.RequireFromString("12.00")},
 			sayCheese: true,
 		},
 		{
@@ -124,7 +126,7 @@ func TestSlicer_Calc(t *testing.T) {
 				"Brie (Large)":  2,
 				"Brie (Medium)": 2,
 				"Brie (Small)":  2}},
-			expected:  Total{SubTotal: decimal.RequireFromString("15.38"), Discount: decimal.RequireFromString("2.60"), Total: decimal.RequireFromString("12.78")},
+			expected:  Total{SubTotal: decimal.RequireFromString("28.00"), Discount: decimal.RequireFromString("6.00"), Total: decimal.RequireFromString("22.00")},
 			sayCheese: true,
 		},
 	} {
